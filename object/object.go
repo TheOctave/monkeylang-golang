@@ -1,7 +1,6 @@
 package object
 
 import (
-	"bytes"
 	"fmt"
 	"monkeylang/ast"
 	"strings"
@@ -16,6 +15,7 @@ const (
 	RETURN_VALUE_OBJ = "RETURN_VALUE"
 	FUNCTION_OBJ     = "FUNCTION"
 	ERROR_OBJ        = "ERROR"
+	STRING_OBJ       = "STRING"
 )
 
 type Object interface {
@@ -64,7 +64,7 @@ type Function struct {
 
 func (f *Function) Type() ObjectType { return FUNCTION_OBJ }
 func (f *Function) Inspect() string {
-	var out bytes.Buffer
+	var out strings.Builder
 
 	params := []string{}
 	for _, p := range f.Parameters {
@@ -80,3 +80,10 @@ func (f *Function) Inspect() string {
 
 	return out.String()
 }
+
+type String struct {
+	Value string
+}
+
+func (s *String) Type() ObjectType { return STRING_OBJ }
+func (s *String) Inspect() string  { return s.Value }

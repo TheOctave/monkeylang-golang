@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"monkeylang/token"
+	"strings"
 )
 
 type Lexer struct {
@@ -51,6 +52,32 @@ func (l *Lexer) readNumber() string {
 		l.readChar()
 	}
 	return l.input[position:l.position]
+}
+
+func (l *Lexer) readString() string {
+	l.readChar() // read the opening quote
+
+	var sb strings.Builder
+
+	for l.ch != '"' && l.ch != 0 {
+		if l.ch == '\\' {
+			l.readChar()
+			if l.ch == 0 {
+				break
+			}
+			if esc, ok := toEscapedRune(l.ch); ok {
+				sb.WriteRune(esc)
+			} else {
+				sb.WriteRune('\\')
+				sb.WriteByte(l.ch)
+			}
+		} else {
+			sb.WriteByte(l.ch)
+		}
+		l.readChar()
+	}
+
+	return sb.String()
 }
 
 func (l *Lexer) skipWhitespace() {
@@ -105,6 +132,9 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LBRACE, l.ch)
 	case '}':
 		tok = newToken(token.RBRACE, l.ch)
+	case '"':
+		tok.Type = token.STRING
+		tok.Literal = l.readString()
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
@@ -135,4 +165,18 @@ func newToken(tokenType token.TokenType, ch byte) token.Token {
 
 func isDigit(ch byte) bool {
 	return '0' <= ch && ch <= '9'
+}
+
+func toEscapedRune(ch byte) (rune, bool) {
+	switch ch {
+	case 'n':
+		return '\n', true
+	case '\r':
+		return '\r', true
+	case 't':
+		return '\t', true
+	case '"':
+		return '"', true
+	}
+	return 0, false
 }
